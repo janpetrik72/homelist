@@ -97,3 +97,21 @@ revoke all on function public.join_household_with_code(text) from public;
 grant execute on function public.create_household(text) to authenticated;
 grant execute on function public.create_household_invite(uuid) to authenticated;
 grant execute on function public.join_household_with_code(text) to authenticated;
+
+
+-- Zapnutí živé synchronizace změn pro obě tabulky.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'inventory_items'
+  ) then
+    alter publication supabase_realtime add table public.inventory_items;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'shopping_items'
+  ) then
+    alter publication supabase_realtime add table public.shopping_items;
+  end if;
+end $$;
