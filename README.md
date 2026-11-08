@@ -38,8 +38,6 @@ Aplikace běží jako statický web na GitHub Pages. Uživatelská data se uklá
 
 ## Spuštění
 
-Aktuální nasazenou verzi najdeš zde:
-
 Pro vlastní nasazení je potřeba připravit projekt Supabase, nastavit databázové tabulky, funkce a RLS politiky a nakonfigurovat veřejnou URL projektu a publishable klíč v aplikaci.
 
 Do veřejného repozitáře nikdy nevkládej:
