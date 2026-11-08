@@ -31,7 +31,7 @@ h2{font-size:clamp(27px,4vw,37px);letter-spacing:-1.2px;line-height:1.15;margin:
 <div class="eyebrow">Ještě jeden krok</div><h2>Propoj svou domácnost</h2><p class="intro">Vytvoř novou domácnost, nebo se připoj k existující pomocí kódu od jejího správce.</p>
 <div class="items">
 <form class="panel" id="createHouseholdForm"><h3>Nová domácnost</h3><label class="field"><span>Název domácnosti</span><input id="householdName" maxlength="80" required placeholder="Např. Naše rodina"></label><button class="primary">Vytvořit domácnost</button></form>
-<form class="panel" id="joinHouseholdForm"><h3>Mám pozvánkový kód</h3><label class="field"><span>Kód od člena rodiny</span><input id="inviteCode" maxlength="20" required placeholder="Např. 4F8A21BC90"></label><button class="primary">Připojit se</button></form>
+<form class="panel" id="joinHouseholdForm"><h3>Mám pozvánkový kód</h3><label class="field"><span>Kód od člena rodiny</span><input id="inviteCode" maxlength="64" required placeholder="Vlož celý 32znakový kód"></label><button class="primary">Připojit se</button></form>
 </div><div id="householdMessage" aria-live="polite"></div>
 </section>
 <section id="appView" class="hidden">
