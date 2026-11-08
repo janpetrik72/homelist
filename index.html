@@ -24,8 +24,8 @@ h2{font-size:clamp(27px,4vw,37px);letter-spacing:-1.2px;line-height:1.15;margin:
 <main class="app">
 <header><div class="brand"><div class="logo">⌂</div><div><h1>HomeList</h1><p>Domácí zásoby pod kontrolou</p></div></div><div class="header-actions"><span class="subtle" id="userLabel"></span><button class="secondary hidden" id="logoutBtn">Odhlásit</button></div></header>
 <section id="authView" class="panel narrow">
-<div class="eyebrow">Rodinný přehled</div><h2 id="authTitle">Přihlášení do HomeList</h2><p class="intro">Přihlas se nebo vytvoř účet. Potom můžeš založit domácnost nebo se připojit pomocí pozvánkového kódu.</p>
-<form id="authForm"><label class="field"><span>E-mail</span><input id="email" type="email" autocomplete="email" required placeholder="vas@email.cz"></label><label class="field"><span>Heslo</span><input id="password" type="password" autocomplete="current-password" minlength="8" required placeholder="Alespoň 8 znaků"></label><div class="actions"><button class="primary" id="authSubmit">Přihlásit se</button><button type="button" class="secondary" id="toggleAuth">Vytvořit účet</button></div></form><button type="button" class="google-btn" id="googleBtn"><span class="google-mark">G</span>Pokračovat přes Google</button><div id="authMessage" aria-live="polite"></div>
+<div class="eyebrow">Rodinný přehled</div><h2>Přihlášení do HomeList</h2><p class="intro">Pro přihlášení a vytvoření účtu použij svůj Google účet. Přístup do domácnosti získáš po přihlášení.</p>
+<button type="button" class="google-btn" id="googleBtn"><span class="google-mark">G</span>Pokračovat přes Google</button><div id="authMessage" aria-live="polite"></div>
 </section>
 <section id="householdView" class="hidden">
 <div class="eyebrow">Ještě jeden krok</div><h2>Propoj svou domácnost</h2><p class="intro">Vytvoř novou domácnost, nebo se připoj k existující pomocí kódu od jejího správce.</p>
@@ -59,7 +59,7 @@ const SUPABASE_KEY='sb_publishable_OBy18TPR2mW6iYAS5SUZjA_QF7jLW9K';
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const emojis={'mléko':'🥛','vejce':'🥚','sýr':'🧀','máslo':'🧈','jogurt':'🥣','maso':'🥩','zelenina':'🥦','ovoce':'🍎','chléb':'🍞','rýže':'🍚','těstoviny':'🍝','mražen':'🧊'};
 const $=id=>document.getElementById(id);
-let user=null,household=null,items=[],shopping=[],tab='all',editing=null,signUpMode=false,channel=null,locations=['Lednice','Mrazák','Spíž'];
+let user=null,household=null,items=[],shopping=[],tab='all',editing=null,channel=null,locations=['Lednice','Mrazák','Spíž'];
 function msg(id,text,error=false){$(id).innerHTML=text?'<div class="message '+(error?'error':'')+'">'+esc(text)+'</div>':''}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function show(view){['authView','householdView','appView'].forEach(id=>$(id).classList.toggle('hidden',id!==view));$('logoutBtn').classList.toggle('hidden',!user);$('userLabel').textContent=user?.email||''}
@@ -80,9 +80,7 @@ function renderShopping(q){const selectedTag=$('tagFilter').value;const list=sho
 function openModal(item){editing=item?.id||null;$('modalTitle').textContent=item?'Upravit položku':'Přidat potravinu';$('itemName').value=item?.name||'';$('itemQty').value=item?.quantity||'';$('itemTags').value=Array.isArray(item?.tags)?item.tags.join(', '):'';$('itemPlace').value=item?.location||locations[0]||'';$('itemLow').value=item?.is_low?'yes':'no';$('modalBackdrop').classList.add('open');$('itemName').focus()}
 function closeModal(){$('modalBackdrop').classList.remove('open');$('itemForm').reset();editing=null}
 async function addShopping(item){if(shopping.some(x=>x.name.toLocaleLowerCase('cs')===item.name.toLocaleLowerCase('cs')&&!x.is_done))return;const {error}=await db.from('shopping_items').insert({household_id:household.id,name:item.name,quantity:item.quantity||'',tags:Array.isArray(item.tags)?item.tags:[],created_by:user.id});if(error)msg('globalMessage',error.message,true)}
-$('authForm').onsubmit=async e=>{e.preventDefault();msg('authMessage','');const email=$('email').value.trim(),password=$('password').value;const result=signUpMode?await db.auth.signUp({email,password}):await db.auth.signInWithPassword({email,password});if(result.error){msg('authMessage',result.error.message,true);return}if(signUpMode&&!result.data.session){msg('authMessage','Účet byl vytvořen. Zkontroluj e-mail a potvrď registraci, potom se přihlas.');return}user=result.data.user;await route()};
 $('googleBtn').onclick=async()=>{msg('authMessage','');const {error}=await db.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});if(error)msg('authMessage',error.message,true)};
-$('toggleAuth').onclick=()=>{signUpMode=!signUpMode;$('authTitle').textContent=signUpMode?'Vytvořit účet HomeList':'Přihlášení do HomeList';$('authSubmit').textContent=signUpMode?'Zaregistrovat se':'Přihlásit se';$('toggleAuth').textContent=signUpMode?'Zpět na přihlášení':'Vytvořit účet';$('password').autocomplete=signUpMode?'new-password':'current-password';msg('authMessage','')};
 $('logoutBtn').onclick=async()=>{await db.auth.signOut();user=null;if(channel)db.removeChannel(channel);show('authView')};
 $('createHouseholdForm').onsubmit=async e=>{e.preventDefault();msg('householdMessage','');const {data,error}=await db.rpc('create_household',{household_name:$('householdName').value.trim()});if(error){msg('householdMessage',error.message,true);return}await route()};
 $('joinHouseholdForm').onsubmit=async e=>{e.preventDefault();msg('householdMessage','');const {data,error}=await db.rpc('join_household_with_code',{invite_code_input:$('inviteCode').value.trim()});if(error){msg('householdMessage',error.message,true);return}await route()};
