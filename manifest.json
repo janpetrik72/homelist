@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "HomeList – domácí zásoby",
+  "short_name": "HomeList",
+  "description": "Domácí zásoby a rodinný nákupní seznam na jednom místě.",
+  "lang": "cs",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6f2",
+  "theme_color": "#f5f6f2",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
