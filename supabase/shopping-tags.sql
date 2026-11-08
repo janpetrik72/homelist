@@ -26,3 +26,12 @@ alter table public.shopping_items
 create unique index if not exists shopping_items_active_inventory_source_idx
   on public.shopping_items(source_inventory_id)
   where source_inventory_id is not null and is_done = false;
+
+
+-- Kategorie prodejny: null znamená automatické určení podle názvu v aplikaci.
+alter table public.inventory_items
+  add column if not exists category text;
+
+alter table public.shopping_items
+  add column if not exists category text;
+
