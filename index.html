@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="cs">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f5f6f2">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f5f6f2"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="HomeList"><link rel="manifest" href="./manifest.json"><link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icon.svg">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <title>HomeList – domácí zásoby</title>
 <style>
@@ -119,5 +119,13 @@ $('closeQrBtn').onclick=()=>$('qrBackdrop').classList.remove('open');$('qrBackdr
 $('locationsBtn').onclick=()=>{$('locationsBackdrop').classList.add('open');renderLocationManager()};$('closeLocationsBtn').onclick=()=>$('locationsBackdrop').classList.remove('open');$('locationsBackdrop').onclick=e=>{if(e.target===$('locationsBackdrop'))$('locationsBackdrop').classList.remove('open')};$('locationForm').onsubmit=async e=>{e.preventDefault();const name=$('newLocationName').value.trim();if(!name)return;if(locations.some(x=>x.toLocaleLowerCase('cs')===name.toLocaleLowerCase('cs'))){msg('globalMessage','Takové místo už existuje.',true);return}const {error}=await db.from('household_locations').insert({household_id:household.id,name,sort_order:locations.length});if(error){msg('globalMessage',error.message,true);return}$('newLocationName').value='';await loadLocations();renderLocationManager();render()};window.moveLocation=async(name,direction)=>{const from=locations.indexOf(name),to=from+direction;if(from<0||to<0||to>=locations.length)return;const reordered=[...locations];[reordered[from],reordered[to]]=[reordered[to],reordered[from]];for(let i=0;i<reordered.length;i++){const {error}=await db.from('household_locations').update({sort_order:i}).eq('household_id',household.id).eq('name',reordered[i]);if(error){msg('globalMessage','Pořadí míst se nepodařilo uložit: '+error.message,true);await loadLocations();renderLocationManager();return}}locations=reordered;renderLocationManager();const current=$('itemPlace').value;$('itemPlace').innerHTML=locations.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');$('itemPlace').value=current};window.deleteLocation=async name=>{if(locations.length<=1){msg('globalMessage','Poslední místo v domácnosti nelze smazat.',true);return}const count=items.filter(x=>x.location===name).length;let target=null;if(count){const choices=locations.filter(x=>x!==name);const answer=prompt('V místě „'+name+'“ je '+count+' položek.\\nZadej přesný název místa, kam je chceš přesunout:\\n'+choices.map((x,i)=>(i+1)+'. '+x).join('\\n'),choices[0]);if(answer===null)return;target=choices.find(x=>x.toLocaleLowerCase('cs')===answer.trim().toLocaleLowerCase('cs'));if(!target){msg('globalMessage','Zadané místo neodpovídá žádné dostupné možnosti.',true);return}}if(!confirm('Opravdu smazat místo „'+name+'“?'+(count?'\\nVšech '+count+' položek bude přesunuto do „'+target+'“.':'')))return;if(count){const {error:moveError}=await db.from('inventory_items').update({location:target}).eq('household_id',household.id).eq('location',name);if(moveError){msg('globalMessage','Položky se nepodařilo přesunout: '+moveError.message,true);return}}const {error}=await db.from('household_locations').delete().eq('household_id',household.id).eq('name',name);if(error){msg('globalMessage','Místo se nepodařilo smazat: '+error.message,true);return}if(tab===name)tab='all';await loadLocations();await loadData()};$('search').oninput=render;$('sort').onchange=render;$('tagFilter').onchange=render;
 db.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;setTimeout(()=>route(),0)});
 setupCategorySelect();init();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(error => console.warn("HomeList: service worker registration failed", error));
+  });
+}
 </script>
 </body></html>
