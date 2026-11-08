@@ -20,7 +20,7 @@ grant select on table public.households to authenticated;
 grant select on table public.household_members to authenticated;
 grant select, insert, update, delete on table public.inventory_items to authenticated;
 grant select, insert, update, delete on table public.shopping_items to authenticated;
-grant select, insert, delete on table public.household_locations to authenticated;
+grant select, insert, update, delete on table public.household_locations to authenticated;
 
 revoke all on function public.is_household_member(uuid) from public, anon, authenticated;
 grant execute on function public.is_household_member(uuid) to authenticated;
@@ -82,3 +82,12 @@ end;
 $$;
 revoke all on function public.join_household_with_code(text) from public, anon, authenticated;
 grant execute on function public.join_household_with_code(text) to authenticated;
+
+
+-- Členové domácnosti mohou měnit pořadí jejích míst.
+drop policy if exists household_locations_update_member on public.household_locations;
+create policy household_locations_update_member
+  on public.household_locations
+  for update to authenticated
+  using (public.is_household_member(household_id))
+  with check (public.is_household_member(household_id));
