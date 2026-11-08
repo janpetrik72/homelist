@@ -35,3 +35,23 @@ alter table public.inventory_items
 alter table public.shopping_items
   add column if not exists category text;
 
+
+
+-- Pořadí míst v domácnosti (sdílené mezi členy).
+alter table public.household_locations
+  add column if not exists sort_order integer;
+
+with ranked_locations as (
+  select id, row_number() over (
+    partition by household_id order by created_at asc, name asc
+  ) - 1 as position
+  from public.household_locations
+)
+update public.household_locations as locations
+set sort_order = ranked_locations.position
+from ranked_locations
+where locations.id = ranked_locations.id
+  and locations.sort_order is null;
+
+alter table public.household_locations
+  alter column sort_order set default 0;
