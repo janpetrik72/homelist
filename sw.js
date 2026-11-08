@@ -1,15 +1,20 @@
-const CACHE_NAME = "homelist-shell-v1";
+const CACHE_NAME = "homelist-shell-v2";
 const APP_FILES = [
   new URL("./", self.registration.scope).href,
   new URL("./manifest.json", self.registration.scope).href,
   new URL("./icon.svg", self.registration.scope).href
 ];
 
+self.addEventListener("message", event => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(APP_FILES))
-      .then(() => self.skipWaiting())
   );
 });
 
