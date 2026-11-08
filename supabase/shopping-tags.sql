@@ -42,7 +42,7 @@ alter table public.household_locations
   add column if not exists sort_order integer;
 
 with ranked_locations as (
-  select id, row_number() over (
+  select ctid as row_tid, row_number() over (
     partition by household_id order by created_at asc, name asc
   ) - 1 as position
   from public.household_locations
@@ -50,7 +50,7 @@ with ranked_locations as (
 update public.household_locations as locations
 set sort_order = ranked_locations.position
 from ranked_locations
-where locations.id = ranked_locations.id
+where locations.ctid = ranked_locations.row_tid
   and locations.sort_order is null;
 
 alter table public.household_locations
