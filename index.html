@@ -304,12 +304,24 @@ function renderPurchaseAnalysis(){
  const categoryRows=[...categoryCounts.entries()].map(([key,count])=>({name:shopCategories.find(c=>c.key===key)?.name||'Ostatní',icon:shopCategories.find(c=>c.key===key)?.icon||'🛒',count})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name,'cs'));
  const unique=counts.size;
  const maxTop=top[0]?.count||1,maxCategory=categoryRows[0]?.count||1;
- let html='<div class="analysis-stats"><div class="analysis-stat"><span>Dokončené nákupy</span><strong>'+completed.length+'</strong></div><div class="analysis-stat"><span>Různé položky</span><strong>'+unique+'</strong></div><div class="analysis-stat"><span>Kategorie</span><strong>'+categoryRows.length+'</strong></div></div>';
+ let html='<div class="analysis-stats"><div class="analysis-stat"><span>Dokončené nákupy</span><strong>'+completed.length+'</strong></div><div class="analysis-stat"><span>Různé položky</span><strong>'+unique+'</strong></div><div class="analysis-stat"><span>Kategorie</span><strong>'+categoryRows.length+'</strong></div></div><div style="display:flex;justify-content:flex-end;margin:0 0 18px"><button class="secondary danger" type="button" id="resetAllPurchasesBtn" '+(completed.length?'':'disabled')+'>↻ Resetovat historii nákupů</button></div>';
  if(!completed.length){$('purchaseAnalysis').innerHTML=html+'<div class="analysis-empty">Zatím tu nejsou žádné dokončené nákupy. Až v nákupním seznamu zaškrtneš nakoupené položky, objeví se zde statistiky.</div>';return}
  html+='<h4 class="analysis-section">🏆 Nejčastěji nakupované položky</h4><div class="analysis-list">'+top.map((x,i)=>'<div class="analysis-row"><strong>'+(i+1)+'. '+esc(x.name)+'</strong><span class="analysis-value">'+x.count+'×</span><div class="analysis-track"><span style="width:'+Math.round(x.count/maxTop*100)+'%"></span></div></div>').join('')+'</div>';
  html+='<h4 class="analysis-section">🧺 Nákupy podle kategorií</h4><div class="analysis-list">'+categoryRows.map(x=>'<div class="analysis-row"><strong>'+x.icon+' '+esc(x.name)+'</strong><span class="analysis-value">'+x.count+'× · '+Math.round(x.count/completed.length*100)+' %</span><div class="analysis-track"><span style="width:'+Math.round(x.count/maxCategory*100)+'%"></span></div></div>').join('')+'</div>';
  html+='<p class="qr-help" style="margin:18px 0 0">Počítá se každé zaškrtnutí jako jeden dokončený nákup. Stejná potravina s různým zápisem se může započítat zvlášť, pokud se její názvy liší.</p>';
  $('purchaseAnalysis').innerHTML=html;
+ $('resetAllPurchasesBtn')?.addEventListener('click',resetAllPurchaseHistory);
+}
+async function resetAllPurchaseHistory(){
+ const completed=shopping.filter(x=>x.is_done);
+ if(!completed.length)return;
+ if(!confirm('Opravdu resetovat celou historii dokončených nákupů? Smažou se všechny '+completed.length+' záznamy za celou domácnost. Tato akce je nevratná a ovlivní také TOP 10 i řazení podle oblíbenosti.'))return;
+ const {error}=await db.from('shopping_items').delete().eq('household_id',household.id).eq('is_done',true);
+ if(error){msg('globalMessage','Historii nákupů se nepodařilo resetovat: '+error.message,true);return}
+ shopping=shopping.filter(x=>!x.is_done);
+ render();
+ renderPurchaseAnalysis();
+ msg('globalMessage','Historie dokončených nákupů celé domácnosti byla resetována.');
 }
 function purchaseHistoryFor(name){const key=normalizeFoodName(name).trim();return shopping.filter(x=>x.is_done&&normalizeFoodName(x.name).trim()===key)}
 function openModal(item){editing=item?.id||null;$('modalTitle').textContent=item?'Upravit položku':'Přidat potravinu';$('itemName').value=item?.name||'';$('itemQty').value=item?.quantity||'';$('itemTags').value=Array.isArray(item?.tags)?item.tags.join(', '):'';$('itemCategory').value=item?.category||'auto';$('itemPlace').value=item?.location||locations[0]||'';const resetButton=$('resetPurchaseCountBtn');const purchaseCount=item?purchaseHistoryFor(item.name).length:0;resetButton.hidden=!item;resetButton.disabled=!purchaseCount;resetButton.textContent='Reset počtu nákupů ('+purchaseCount+')';const favoriteButton=$('favoriteItemBtn');favoriteButton.hidden=!item;favoriteButton.textContent=item?(favorites.has(item.id)?'★ Odebrat z oblíbených':'☆ Přidat do oblíbených'):'☆ Přidat do oblíbených';$('modalBackdrop').classList.add('open');$('itemName').focus()}
